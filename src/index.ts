@@ -160,7 +160,6 @@ class SwcServerlessPlugin implements ServerlessPlugin {
       },
       'after:package:createDeploymentArtifacts': async () => {
         this.log.verbose('after:package:createDeploymentArtifacts');
-        await this.disposeContexts();
         await this.cleanup();
       },
       'before:deploy:function:packageFunction': async () => {
@@ -172,7 +171,6 @@ class SwcServerlessPlugin implements ServerlessPlugin {
       },
       'after:deploy:function:packageFunction': async () => {
         this.log.verbose('after:deploy:function:packageFunction');
-        await this.disposeContexts();
         await this.cleanup();
       },
       'before:invoke:local:invoke': async () => {
@@ -182,9 +180,7 @@ class SwcServerlessPlugin implements ServerlessPlugin {
         await this.copyExtras();
         await this.preLocal();
       },
-      'after:invoke:local:invoke': async () => {
-        await this.disposeContexts();
-      },
+      'after:invoke:local:invoke': async () => {},
     };
   }
 
@@ -235,7 +231,6 @@ class SwcServerlessPlugin implements ServerlessPlugin {
     for (const [functionAlias, fn] of Object.entries(functions)) {
       const currFn = fn as SwcFunctionDefinitionHandler;
       if (this.isFunctionDefinitionHandler(currFn) && this.isNodeFunction(currFn)) {
-        buildOptions.disposeContext = currFn.disposeContext ? currFn.disposeContext : buildOptions.disposeContext; // disposeContext configuration can be overridden per function
         if (buildOptions.skipBuild && !buildOptions.skipBuildExcludeFns?.includes(functionAlias)) {
           currFn.skipSwc = true;
         }
@@ -328,7 +323,6 @@ class SwcServerlessPlugin implements ServerlessPlugin {
       skipBuild: false,
       skipBuildExcludeFns: [],
       stripEntryResolveExtensions: false,
-      disposeContext: true, // default true
     };
 
     const providerRuntime = this.serverless.service.provider.runtime;
@@ -527,14 +521,6 @@ class SwcServerlessPlugin implements ServerlessPlugin {
     }
 
     service.package.artifact = path.join(SERVERLESS_FOLDER, path.basename(service.package.artifact));
-  }
-
-  async disposeContexts(): Promise<void> {
-    for (const { context } of Object.values(this.buildCache)) {
-      if (context) {
-        this.buildOptions?.disposeContext && (await context.dispose());
-      }
-    }
   }
 
   async cleanup(): Promise<void> {

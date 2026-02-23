@@ -38,10 +38,8 @@ export async function bundle(this: SwcServerlessPlugin): Promise<void> {
     'outputWorkFolder',
     'nodeExternals',
     'skipBuild',
-    'skipRebuild',
     'skipBuildExcludeFns',
     'stripEntryResolveExtensions',
-    'disposeContext',
   ].reduce<Record<string, any>>((options, optionName) => {
     const { [optionName]: _, ...rest } = options;
 
@@ -79,16 +77,9 @@ export async function bundle(this: SwcServerlessPlugin): Promise<void> {
 
     // check cache
     if (this.buildCache) {
-      const { result, context } = this.buildCache[entry] ?? {};
-
-      if (result?.rebuild) {
-        await result.rebuild();
+      const { result } = this.buildCache[entry] ?? {};
+      if (result) {
         return { bundlePath, entry, result };
-      }
-
-      if (context?.rebuild) {
-        const rebuild = await context.rebuild();
-        return { bundlePath, entry, context, result: rebuild };
       }
     }
 
@@ -126,7 +117,7 @@ export async function bundle(this: SwcServerlessPlugin): Promise<void> {
       throw new this.serverless.classes.Error(`SWC bundle failed: ${err.message}`);
     }
 
-    return { bundlePath, entry, result, context: null };
+    return { bundlePath, entry, result };
   };
 
   // Files can contain multiple handlers for multiple functions, we want to get only the unique ones

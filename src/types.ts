@@ -49,14 +49,11 @@ export interface Configuration extends SwcOptions {
   outputFileExtension: '.js' | '.cjs' | '.mjs';
   nodeExternals?: NodeExternalsOptions;
   skipBuild?: boolean;
-  skipRebuild?: boolean;
   skipBuildExcludeFns: string[];
   stripEntryResolveExtensions?: boolean;
-  disposeContext?: boolean;
 }
 
 export interface SwcFunctionDefinitionHandler extends Serverless.FunctionDefinitionHandler {
-  disposeContext?: boolean;
   skipSwc: boolean;
   swcEntrypoint?: string;
 }
@@ -94,45 +91,6 @@ export interface FileBuildResult {
   bundlePath: string;
   entry: string;
   result: OldAPIResult;
-  context?: BuildContext | null;
-}
-
-interface ServeOptions {
-  port?: number;
-  host?: string;
-  servedir?: string;
-  keyfile?: string;
-  certfile?: string;
-  onRequest?: (args: ServeOnRequestArgs) => void;
-}
-
-interface ServeOnRequestArgs {
-  remoteAddress: string;
-  method: string;
-  path: string;
-  status: number;
-  /** The time to generate the response, not to send it */
-  timeInMS: number;
-}
-
-export interface BuildContext {
-  /** Documentation: https://swc.rs/docs/usage/spack */
-  rebuild(): Promise<any>;
-
-  /** Documentation: https://swc.github.io/api/#watch */
-  watch(options?: {}): Promise<void>;
-
-  /** Documentation: https://swc.github.io/api/#serve */
-  serve(options?: ServeOptions): Promise<ServeResult>;
-
-  cancel(): Promise<void>;
-  dispose(): Promise<void>;
-}
-
-/** Documentation: https://swc.rs/docs/usage/spack */
-interface ServeResult {
-  port: number;
-  hosts: string[];
 }
 
 export type JSONObject = any;
