@@ -13,11 +13,11 @@ import { assertIsString, doSharePath, flatDep, getDepsFromBundle, isESM, stripEn
 import { getPackager } from './packagers';
 import { humanSize, trimExtension, zip } from './utils';
 
-import type EsbuildServerlessPlugin from './index';
+import type SwcServerlessPlugin from './index';
 import type { SwcFunctionDefinitionHandler, FunctionBuildResult, FunctionReference, IFiles } from './types';
 
 function setFunctionArtifactPath(
-  this: EsbuildServerlessPlugin,
+  this: SwcServerlessPlugin,
   func: Serverless.FunctionDefinitionHandler,
   artifactPath: string
 ) {
@@ -29,7 +29,7 @@ function setFunctionArtifactPath(
     (func as any).artifact = artifactPath;
     // eslint-disable-next-line no-param-reassign, prefer-object-spread
     func.package = Object.assign({}, func.package, { disable: true });
-    this.log.verbose(`${func.name} is packaged by the esbuild plugin. Ignore messages from SLS.`);
+    this.log.verbose(`${func.name} is packaged by the swc plugin. Ignore messages from SLS.`);
   } else {
     // eslint-disable-next-line no-param-reassign
     func.package = {
@@ -87,7 +87,7 @@ export const filterFilesForZipPackage = ({
 };
 
 // eslint-disable-next-line max-statements
-export async function pack(this: EsbuildServerlessPlugin) {
+export async function pack(this: SwcServerlessPlugin) {
   // GOOGLE Provider requires a package.json and NO node_modules
 
   const providerName = this.serverless?.service?.provider?.name;
@@ -126,7 +126,7 @@ export async function pack(this: EsbuildServerlessPlugin) {
     });
 
   if (isEmpty(files)) {
-    this.log.verbose('Packaging: No files found. Skipping esbuild.');
+    this.log.verbose('Packaging: No files found. Skipping swc.');
     return;
   }
 
@@ -243,7 +243,7 @@ export async function pack(this: EsbuildServerlessPlugin) {
   this.log.verbose('All functions zipped.');
 }
 
-export async function copyPreBuiltResources(this: EsbuildServerlessPlugin) {
+export async function copyPreBuiltResources(this: SwcServerlessPlugin) {
   this.log.verbose('Copying Prebuilt resources');
 
   const { workDirPath, packageOutputPath } = this;

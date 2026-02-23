@@ -1,7 +1,7 @@
 import { assertIsString } from './helper';
-import type EsbuildServerlessPlugin from './index';
+import type SwcServerlessPlugin from './index';
 
-export function preLocal(this: EsbuildServerlessPlugin) {
+export function preLocal(this: SwcServerlessPlugin) {
   assertIsString(this.buildDirPath);
 
   this.serviceDirPath = this.buildDirPath;

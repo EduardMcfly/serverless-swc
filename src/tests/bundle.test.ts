@@ -43,7 +43,7 @@ const swcPlugin = (override?: Partial<SwcServerlessPlugin>): SwcServerlessPlugin
       outputFileExtension: '.js',
     },
     plugins: [],
-    buildDirPath: '/workdir/.esbuild',
+    buildDirPath: '/workdir/.swc',
     functionEntries: [],
     log: {
       error: jest.fn(),
@@ -68,7 +68,7 @@ afterEach(() => {
   jest.resetAllMocks();
 });
 
-it('should call esbuild only once when functions share the same entry', async () => {
+it('should call swc only once when functions share the same entry', async () => {
   const functionEntries: FunctionEntry[] = [
     {
       entry: 'file1.ts',
@@ -94,7 +94,7 @@ it('should call esbuild only once when functions share the same entry', async ()
   expect(proxy).toHaveBeenCalledTimes(1);
 });
 
-it('should only call esbuild multiple times when functions have different entries', async () => {
+it('should only call swc multiple times when functions have different entries', async () => {
   const functionEntries: FunctionEntry[] = [
     {
       entry: 'file1.ts',
@@ -181,7 +181,7 @@ it('should set the concurrency for pMap with the concurrency specified', async (
   });
 });
 
-it('should filter out non esbuild options', async () => {
+it('should filter out non swc options', async () => {
   const functionEntries: FunctionEntry[] = [
     {
       entry: 'file1.ts',
@@ -204,7 +204,7 @@ it('should filter out non esbuild options', async () => {
     externalModules: ['aws-sdk'],
     output: {
       name: 'file1.js',
-      path: '/workdir/.esbuild',
+      path: '/workdir/.swc',
     },
   };
 

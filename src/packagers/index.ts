@@ -9,7 +9,7 @@ import { memoizeWith } from 'ramda';
 
 import { isPackagerId } from '../type-predicate';
 
-import type EsbuildServerlessPlugin from '../index';
+import type SwcServerlessPlugin from '../index';
 import type { PackagerId, PackagerOptions } from '../types';
 import type { Packager } from './packager';
 
@@ -34,14 +34,14 @@ const packagerFactories: Record<PackagerId, (packagerOptions: PackagerOptions) =
 /**
  * Asynchronously create a Packager instance and memoize it.
  *
- * @this EsbuildServerlessPlugin - Active plugin instance
+ * @this SwcServerlessPlugin - Active plugin instance
  * @param {string} packagerId - Well known packager id
  * @returns {Promise<Packager>} - The selected Packager
  */
 export const getPackager = memoizeWith(
   (packagerId) => packagerId,
   async function (
-    this: EsbuildServerlessPlugin,
+    this: SwcServerlessPlugin,
     packagerId: PackagerId,
     packagerOptions: PackagerOptions
   ): Promise<Packager> {

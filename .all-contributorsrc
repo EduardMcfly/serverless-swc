@@ -1,6 +1,6 @@
 {
-  "projectName": "serverless-esbuild",
-  "projectOwner": "floydspace",
+  "projectName": "serverless-swc",
+  "projectOwner": "eduardmcfly",
   "repoType": "github",
   "repoHost": "https://github.com",
   "files": [
@@ -310,6 +310,15 @@
       "name": "Zach Levi",
       "avatar_url": "https://avatars.githubusercontent.com/u/131263652?v=4",
       "profile": "https://github.com/ZachLeviPixel",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "eduardmcfly",
+      "name": "Eduard Castellanos",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16842163?v=4",
+      "profile": "https://github.com/eduardmcfly",
       "contributions": [
         "code"
       ]

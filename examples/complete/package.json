@@ -9,9 +9,9 @@
   },
   "devDependencies": {
     "@types/node": "^18.7.21",
-    "esbuild": "^0.24.0",
+    "@swc/core": "^1.15.13",
     "serverless": "^3.22.0",
-    "serverless-esbuild": "file:../..",
+    "serverless-swc": "file:../..",
     "serverless-offline": "^10.2.1",
     "ts-node": "^10.9.1",
     "typescript": "^4.8.3"

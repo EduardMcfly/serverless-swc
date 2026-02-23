@@ -1,11 +1,11 @@
 service: complete-example
 
 plugins:
-  - serverless-esbuild
+  - serverless-swc
   - serverless-offline
 
 custom:
-  esbuild:
+  swc:
     minify: true
     external:
       - isin-validator

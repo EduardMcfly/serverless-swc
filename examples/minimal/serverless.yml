@@ -1,7 +1,7 @@
 service: minimal-example
 
 plugins:
-  - serverless-esbuild
+  - serverless-swc
 
 provider:
   name: aws

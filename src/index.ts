@@ -340,14 +340,14 @@ class SwcServerlessPlugin implements ServerlessPlugin {
     const withResolvedOptions = mergeDeepRight(withDefaultOptions(resolvedOptions));
 
     const configPath: string | undefined =
-      this.serverless.service.custom?.swc?.config || this.serverless.service.custom?.esbuild?.config;
+      this.serverless.service.custom?.swc?.config || this.serverless.service.custom?.swc?.config;
 
     const config: ConfigFn | undefined = configPath ? require(path.join(this.serviceDirPath, configPath)) : undefined;
 
     return withResolvedOptions<Configuration>(
       config
         ? config(this.serverless)
-        : this.serverless.service.custom?.swc ?? this.serverless.service.custom?.esbuild ?? {}
+        : this.serverless.service.custom?.swc ?? this.serverless.service.custom?.swc ?? {}
     ) as Configuration;
   }
 
@@ -391,7 +391,7 @@ class SwcServerlessPlugin implements ServerlessPlugin {
 
     fs.mkdirpSync(this.buildDirPath);
     fs.mkdirpSync(path.join(this.workDirPath, SERVERLESS_FOLDER));
-    // exclude serverless-esbuild
+    // exclude serverless-swc
     this.serverless.service.package = {
       ...(this.serverless.service.package || {}),
       patterns: [

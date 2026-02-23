@@ -159,7 +159,7 @@ export class NPM implements Packager {
       if (err instanceof SpawnError) {
         // Only exit with an error if we have critical npm errors for 2nd level inside
         // Split the stderr by \n character to get the npm ERR! plaintext lines, ignore additional JSON blob (emitted by npm >=7)
-        // see https://github.com/serverless-heaven/serverless-webpack/pull/782 and https://github.com/floydspace/serverless-esbuild/issues/288
+        // see https://github.com/serverless-heaven/serverless-webpack/pull/782 and https://github.com/floydspace/serverless-swc/issues/288
         const lines = split('\n', err.stderr);
         const npmErrors = takeWhile((line) => line !== '{', lines);
 
@@ -208,7 +208,7 @@ export class NPM implements Packager {
             //   "integrity": "sha512-fy6RAnofLSnLHgOUmgsFz0ZFnJcJeNHT+qUfHJ7daIFlBaciRDR6v5sdWm7mAM2EzQ1KFf2hmKJVFZgthVeCAw==",
             //   "_id": "samchungy-dep-b@3.0.0",
             //   "extraneous": false,
-            //   "path": "/Users/schung/me/serverless-esbuild/examples/individually/node_modules/samchungy-dep-b",
+            //   "path": "/Users/schung/me/serverless-swc/examples/individually/node_modules/samchungy-dep-b",
             //   "_dependencies": {
             //     "samchungy-dep-c": "^1.0.0",
             //     "samchungy-dep-d": "^1.0.0"

@@ -105,11 +105,19 @@ export async function bundle(this: SwcServerlessPlugin): Promise<void> {
     try {
       result = await swcBundle(options);
 
-      for (const [name, output] of Object.entries(result)) {
-        const outFilePath = path.join(options.output.path, name);
-        fs.writeFileSync(outFilePath, output.code);
-        if (output.map) {
-          fs.writeFileSync(`${outFilePath}.map`, output.map);
+      for (const { code, map } of Object.values(result)) {
+        const { path: outPath, name } = options.output;
+        const outFilePath = path.join(outPath, name);
+        fs.mkdirSync(path.dirname(outFilePath), { recursive: true });
+
+        let finalCode = code;
+        if (map) {
+          fs.writeFileSync(`${outFilePath}.map`, map);
+          finalCode += `\n//# sourceMappingURL=${name}.map`;
+        }
+
+        if (finalCode) {
+          fs.writeFileSync(outFilePath, finalCode);
         }
       }
     } catch (err: any) {

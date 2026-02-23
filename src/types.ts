@@ -119,10 +119,10 @@ export interface BuildContext {
   /** Documentation: https://swc.rs/docs/usage/spack */
   rebuild(): Promise<any>;
 
-  /** Documentation: https://esbuild.github.io/api/#watch */
+  /** Documentation: https://swc.github.io/api/#watch */
   watch(options?: {}): Promise<void>;
 
-  /** Documentation: https://esbuild.github.io/api/#serve */
+  /** Documentation: https://swc.github.io/api/#serve */
   serve(options?: ServeOptions): Promise<ServeResult>;
 
   cancel(): Promise<void>;

@@ -1,6 +1,6 @@
 import { preLocal } from '../pre-local';
 
-import type EsbuildServerlessPlugin from '../index';
+import type SwcServerlessPlugin from '../index';
 
 const chdirSpy = jest.spyOn(process, 'chdir').mockImplementation();
 
@@ -9,7 +9,7 @@ afterEach(() => {
 });
 
 it('should call chdir with the buildDirPath if the invoked function is a node function', () => {
-  const esbuildPlugin = {
+  const swcPlugin = {
     buildDirPath: 'workdir/.build',
     serverless: {
       config: {},
@@ -22,13 +22,13 @@ it('should call chdir with the buildDirPath if the invoked function is a node fu
     },
   };
 
-  preLocal.call(esbuildPlugin as unknown as EsbuildServerlessPlugin);
+  preLocal.call(swcPlugin as unknown as SwcServerlessPlugin);
 
-  expect(chdirSpy).toHaveBeenCalledWith(esbuildPlugin.buildDirPath);
+  expect(chdirSpy).toHaveBeenCalledWith(swcPlugin.buildDirPath);
 });
 
 it('should not call chdir if the invoked function is not a node function', () => {
-  const esbuildPlugin = {
+  const swcPlugin = {
     buildDirPath: 'workdir/.build',
     serverless: {
       config: {},
@@ -39,7 +39,7 @@ it('should not call chdir if the invoked function is not a node function', () =>
     functions: {},
   };
 
-  preLocal.call(esbuildPlugin as unknown as EsbuildServerlessPlugin);
+  preLocal.call(swcPlugin as unknown as SwcServerlessPlugin);
 
   expect(chdirSpy).not.toHaveBeenCalled();
 });

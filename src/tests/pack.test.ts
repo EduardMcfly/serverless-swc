@@ -5,7 +5,7 @@ import pMap from 'p-map';
 import { filterFilesForZipPackage, pack, copyPreBuiltResources } from '../pack';
 import * as utils from '../utils';
 import type { SwcFunctionDefinitionHandler, FunctionBuildResult } from '../types';
-import type EsbuildServerlessPlugin from '../index';
+import type SwcServerlessPlugin from '../index';
 import { SERVERLESS_FOLDER } from '../constants';
 
 jest.mock('globby');
@@ -24,13 +24,13 @@ describe('filterFilesForZipPackage', () => {
           {
             localPath: '__only_service-otherFnName/bin/imagemagick/include/ImageMagick/magick/method-attribute.h',
             rootPath:
-              '/home/capaj/repos/google/search/.esbuild/.build/__only_service-otherFnName/bin/imagemagick/include/ImageMagick/magick/method-attribute.h',
+              '/home/capaj/repos/google/search/.swc/.build/__only_service-otherFnName/bin/imagemagick/include/ImageMagick/magick/method-attribute.h',
           },
 
           {
             localPath: '__only_fnAlias/bin/imagemagick/include/ImageMagick/magick/method-attribute.h',
             rootPath:
-              '/home/capaj/repos/google/search/.esbuild/.build/__only_fnAlias/bin/imagemagick/include/ImageMagick/magick/method-attribute.h',
+              '/home/capaj/repos/google/search/.swc/.build/__only_fnAlias/bin/imagemagick/include/ImageMagick/magick/method-attribute.h',
           },
         ],
 
@@ -45,7 +45,7 @@ describe('filterFilesForZipPackage', () => {
       [
         {
           "localPath": "__only_fnAlias/bin/imagemagick/include/ImageMagick/magick/method-attribute.h",
-          "rootPath": "/home/capaj/repos/google/search/.esbuild/.build/__only_fnAlias/bin/imagemagick/include/ImageMagick/magick/method-attribute.h",
+          "rootPath": "/home/capaj/repos/google/search/.swc/.build/__only_fnAlias/bin/imagemagick/include/ImageMagick/magick/method-attribute.h",
         },
       ]
     `);
@@ -92,7 +92,7 @@ describe('pack', () => {
         },
       ];
 
-      const esbuildPlugin = {
+      const swcPlugin = {
         buildResults,
         serverless: {
           service: {
@@ -110,9 +110,9 @@ describe('pack', () => {
           external: [],
           nativeZip: false,
         },
-        buildDirPath: '/workdir/serverless-esbuild/examples/individually/.esbuild/.build',
-        workDirPath: '/workdir/serverless-esbuild/examples/individually/.esbuild/',
-        serviceDirPath: '/workdir/serverless-esbuild/examples/individually',
+        buildDirPath: '/workdir/serverless-swc/examples/individually/.swc/.build',
+        workDirPath: '/workdir/serverless-swc/examples/individually/.swc/',
+        serviceDirPath: '/workdir/serverless-swc/examples/individually',
         log: {
           error: jest.fn(),
           warning: jest.fn(),
@@ -122,19 +122,19 @@ describe('pack', () => {
           verbose: jest.fn(),
           success: jest.fn(),
         },
-      } as unknown as EsbuildServerlessPlugin;
+      } as unknown as SwcServerlessPlugin;
 
       const zipSpy = jest.spyOn(utils, 'zip').mockResolvedValue();
 
-      await pack.call(esbuildPlugin);
+      await pack.call(swcPlugin);
 
       expect(zipSpy).toHaveBeenCalledWith(
-        '/workdir/serverless-esbuild/examples/individually/.esbuild/.serverless/hello1.zip',
+        '/workdir/serverless-swc/examples/individually/.swc/.serverless/hello1.zip',
         expect.any(Array),
         expect.any(Boolean)
       );
       expect(zipSpy).toHaveBeenCalledWith(
-        '/workdir/serverless-esbuild/examples/individually/.esbuild/.serverless/hello2.zip',
+        '/workdir/serverless-swc/examples/individually/.swc/.serverless/hello2.zip',
         expect.any(Array),
         expect.any(Boolean)
       );
@@ -164,7 +164,7 @@ describe('pack', () => {
         },
       ];
 
-      const esbuildPlugin = {
+      const swcPlugin = {
         buildResults,
         serverless: {
           service: {
@@ -182,9 +182,9 @@ describe('pack', () => {
           external: [],
           nativeZip: false,
         },
-        buildDirPath: '/workdir/serverless-esbuild/examples/individually/.esbuild/.build',
-        workDirPath: '/workdir/serverless-esbuild/examples/individually/.esbuild/',
-        serviceDirPath: '/workdir/serverless-esbuild/examples/individually',
+        buildDirPath: '/workdir/serverless-swc/examples/individually/.swc/.build',
+        workDirPath: '/workdir/serverless-swc/examples/individually/.swc/',
+        serviceDirPath: '/workdir/serverless-swc/examples/individually',
         log: {
           error: jest.fn(),
           warning: jest.fn(),
@@ -194,9 +194,9 @@ describe('pack', () => {
           verbose: jest.fn(),
           success: jest.fn(),
         },
-      } as unknown as EsbuildServerlessPlugin;
+      } as unknown as SwcServerlessPlugin;
 
-      await pack.call(esbuildPlugin);
+      await pack.call(swcPlugin);
 
       expect(pMap).toHaveBeenCalledWith(expect.any(Array), expect.any(Function), {
         concurrency: Infinity,
@@ -209,7 +209,7 @@ describe('copyPreBuiltResources', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
-  function getMockEsbuildPlugin(bundleIndividually = true): EsbuildServerlessPlugin {
+  function getMockSwcPlugin(bundleIndividually = true): SwcServerlessPlugin {
     return {
       functions: {
         hello1: { handler: 'hello1.handler', events: [], package: { artifact: 'hello1' }, skipSwc: true },
@@ -232,10 +232,10 @@ describe('copyPreBuiltResources', () => {
         external: [],
         nativeZip: false,
       },
-      buildDirPath: '/workdir/serverless-esbuild/examples/individually/.esbuild/.build',
-      workDirPath: '/workdir/serverless-esbuild/examples/individually/.esbuild/',
-      serviceDirPath: '/workdir/serverless-esbuild/examples/individually',
-      packageOutputPath: '/workdir/serverless-esbuild/examples/minimal',
+      buildDirPath: '/workdir/serverless-swc/examples/individually/.swc/.build',
+      workDirPath: '/workdir/serverless-swc/examples/individually/.swc/',
+      serviceDirPath: '/workdir/serverless-swc/examples/individually',
+      packageOutputPath: '/workdir/serverless-swc/examples/minimal',
       log: {
         error: jest.fn(),
         warning: jest.fn(),
@@ -245,50 +245,50 @@ describe('copyPreBuiltResources', () => {
         verbose: jest.fn(),
         success: jest.fn(),
       },
-    } as unknown as EsbuildServerlessPlugin;
+    } as unknown as SwcServerlessPlugin;
   }
 
   it('should copy the single artifact if not bundling individually', async () => {
-    const mockEsbuildPlugin = getMockEsbuildPlugin(false);
+    const mockSwcPlugin = getMockSwcPlugin(false);
 
-    await copyPreBuiltResources.call(mockEsbuildPlugin);
+    await copyPreBuiltResources.call(mockSwcPlugin);
 
-    expect(mockEsbuildPlugin.serverless.service.package.artifact).toEqual(
-      `${mockEsbuildPlugin.workDirPath}${SERVERLESS_FOLDER}/${mockEsbuildPlugin.serverless.service.service}.zip`
+    expect(mockSwcPlugin.serverless.service.package.artifact).toEqual(
+      `${mockSwcPlugin.workDirPath}${SERVERLESS_FOLDER}/${mockSwcPlugin.serverless.service.service}.zip`
     );
     expect(fs.copy).toHaveBeenCalledTimes(1);
   });
 
   it('should copy the artifacts for all of the functions when bundling individually', async () => {
-    const mockEsbuildPlugin = getMockEsbuildPlugin();
+    const mockSwcPlugin = getMockSwcPlugin();
 
-    await copyPreBuiltResources.call(mockEsbuildPlugin);
+    await copyPreBuiltResources.call(mockSwcPlugin);
 
-    expect(mockEsbuildPlugin.serverless.service.package.artifact).not.toBeDefined();
+    expect(mockSwcPlugin.serverless.service.package.artifact).not.toBeDefined();
     expect(fs.copy).toHaveBeenCalledTimes(2);
-    Object.keys(mockEsbuildPlugin.functions).forEach((functionAlias) => {
-      const func = mockEsbuildPlugin.functions[functionAlias];
-      expect(func?.package?.artifact).toEqual(`.esbuild/${SERVERLESS_FOLDER}/${functionAlias}.zip`);
+    Object.keys(mockSwcPlugin.functions).forEach((functionAlias) => {
+      const func = mockSwcPlugin.functions[functionAlias];
+      expect(func?.package?.artifact).toEqual(`.swc/${SERVERLESS_FOLDER}/${functionAlias}.zip`);
     });
   });
 
-  it('should not copy over artifacts for functions where `skipEsBuild` is false', async () => {
-    const mockEsbuildPlugin = getMockEsbuildPlugin();
-    mockEsbuildPlugin.functions.hello3 = {
+  it('should not copy over artifacts for functions where `skipSwc` is false', async () => {
+    const mockSwcPlugin = getMockSwcPlugin();
+    mockSwcPlugin.functions.hello3 = {
       handler: 'hello3.handler',
       events: [],
       package: { artifact: 'hello3' },
       skipSwc: false,
     } as SwcFunctionDefinitionHandler;
 
-    await copyPreBuiltResources.call(mockEsbuildPlugin);
+    await copyPreBuiltResources.call(mockSwcPlugin);
 
-    expect(mockEsbuildPlugin.serverless.service.package.artifact).not.toBeDefined();
+    expect(mockSwcPlugin.serverless.service.package.artifact).not.toBeDefined();
     expect(fs.copy).toHaveBeenCalledTimes(2);
-    Object.keys(mockEsbuildPlugin.functions).forEach((functionAlias) => {
-      const func = mockEsbuildPlugin.functions[functionAlias] as SwcFunctionDefinitionHandler;
+    Object.keys(mockSwcPlugin.functions).forEach((functionAlias) => {
+      const func = mockSwcPlugin.functions[functionAlias] as SwcFunctionDefinitionHandler;
       if (func.skipSwc) {
-        expect(func?.package?.artifact).toEqual(`.esbuild/${SERVERLESS_FOLDER}/${functionAlias}.zip`);
+        expect(func?.package?.artifact).toEqual(`.swc/${SERVERLESS_FOLDER}/${functionAlias}.zip`);
       }
     });
   });

@@ -135,7 +135,7 @@ describe('extractFunctionEntries', () => {
       ]);
     });
 
-    it('should allow resolve extensions custom Esbuild setting', () => {
+    it('should allow resolve extensions custom Swc setting', () => {
       jest.mocked(fs.existsSync).mockReturnValue(true);
       const functionDefinitions = {
         function1: {

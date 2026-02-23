@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import type Serverless from 'serverless';
 import type Service from 'serverless/classes/Service';
 
-import EsbuildServerlessPlugin from '../index';
+import SwcServerlessPlugin from '../index';
 import type { ImprovedServerlessOptions } from '../types';
 
 jest.mock('fs-extra');
@@ -89,20 +89,20 @@ afterEach(() => {
 });
 
 describe('Move Artifacts', () => {
-  it('should copy files from the esbuild folder to the serverless folder', async () => {
-    const plugin = new EsbuildServerlessPlugin(mockServerlessConfig(), mockOptions);
+  it('should copy files from the swc folder to the serverless folder', async () => {
+    const plugin = new SwcServerlessPlugin(mockServerlessConfig(), mockOptions);
 
     plugin.hooks.initialize?.();
 
     await plugin.moveArtifacts();
 
-    expect(fs.copy).toHaveBeenCalledWith('/workDir/.esbuild/.serverless', '/workDir/.serverless');
+    expect(fs.copy).toHaveBeenCalledWith('/workDir/.swc/.serverless', '/workDir/.serverless');
   });
 
   describe('function option', () => {
     it('should update the selected functions base path to the serverless folder', async () => {
       mockGetFunction.mockReturnValue(packageIndividuallyService.functions?.hello1);
-      const plugin = new EsbuildServerlessPlugin(mockServerlessConfig(), {
+      const plugin = new SwcServerlessPlugin(mockServerlessConfig(), {
         ...mockOptions,
         function: 'hello1',
       });
@@ -127,7 +127,7 @@ describe('Move Artifacts', () => {
 
   describe('package individually', () => {
     it('should update function package artifacts base path to the serverless folder', async () => {
-      const plugin = new EsbuildServerlessPlugin(mockServerlessConfig(), mockOptions);
+      const plugin = new SwcServerlessPlugin(mockServerlessConfig(), mockOptions);
 
       plugin.hooks.initialize?.();
 
@@ -154,7 +154,7 @@ describe('Move Artifacts', () => {
     });
 
     it('should only update the base path of node functions', async () => {
-      const plugin = new EsbuildServerlessPlugin(
+      const plugin = new SwcServerlessPlugin(
         mockServerlessConfig({
           functions: {
             ...packageIndividuallyService.functions,
@@ -188,11 +188,11 @@ describe('Move Artifacts', () => {
       `);
     });
 
-    it('should skip function if skipEsbuild is set to true', async () => {
+    it('should skip function if skipSwc is set to true', async () => {
       jest.mocked(fs.existsSync).mockReturnValue(true);
 
-      const hello3 = { handler: 'hello3.handler', events: [], skipEsbuild: true };
-      const plugin = new EsbuildServerlessPlugin(
+      const hello3 = { handler: 'hello3.handler', events: [], skipSwc: true };
+      const plugin = new SwcServerlessPlugin(
         mockServerlessConfig({
           functions: {
             ...packageIndividuallyService.functions,
@@ -224,7 +224,7 @@ describe('Move Artifacts', () => {
           "hello3": {
             "events": [],
             "handler": "hello3.handler",
-            "skipEsbuild": true,
+            "skipSwc": true,
           },
         }
       `);
@@ -265,7 +265,7 @@ describe('Move Artifacts', () => {
 
   describe('service package', () => {
     it('should update the service package artifact base path to the serverless folder', async () => {
-      const plugin = new EsbuildServerlessPlugin(mockServerlessConfig(packageService), mockOptions);
+      const plugin = new SwcServerlessPlugin(mockServerlessConfig(packageService), mockOptions);
 
       plugin.hooks.initialize?.();
 
@@ -279,7 +279,7 @@ describe('Move Artifacts', () => {
 describe('Prepare', () => {
   describe('function package', () => {
     it('should set package patterns on functions only if supplied', () => {
-      const plugin = new EsbuildServerlessPlugin(mockServerlessConfig(patternsService), mockOptions);
+      const plugin = new SwcServerlessPlugin(mockServerlessConfig(patternsService), mockOptions);
 
       plugin.hooks.initialize?.();
 
@@ -314,12 +314,12 @@ describe('Prepare', () => {
       const skipBuildServerlessConfig = {
         ...patternsService,
         custom: {
-          esbuild: {
+          swc: {
             skipBuild: true,
           },
         },
       };
-      const plugin = new EsbuildServerlessPlugin(mockServerlessConfig(skipBuildServerlessConfig), mockOptions);
+      const plugin = new SwcServerlessPlugin(mockServerlessConfig(skipBuildServerlessConfig), mockOptions);
       const copyPreBuiltResourcesSpy = jest.spyOn(plugin, 'copyPreBuiltResources');
       const prepareSpy = jest.spyOn(plugin, 'prepare');
 

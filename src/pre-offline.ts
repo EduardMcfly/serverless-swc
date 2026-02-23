@@ -2,9 +2,9 @@ import { relative } from 'path';
 import { assocPath } from 'ramda';
 import { assertIsString } from './helper';
 
-import type EsbuildServerlessPlugin from './index';
+import type SwcServerlessPlugin from './index';
 
-export function preOffline(this: EsbuildServerlessPlugin) {
+export function preOffline(this: SwcServerlessPlugin) {
   assertIsString(this.buildDirPath);
 
   // Set offline location automatically if not set manually
