@@ -4,7 +4,7 @@ import pMap from 'p-map';
 
 import { filterFilesForZipPackage, pack, copyPreBuiltResources } from '../pack';
 import * as utils from '../utils';
-import type { EsbuildFunctionDefinitionHandler, FunctionBuildResult } from '../types';
+import type { SwcFunctionDefinitionHandler, FunctionBuildResult } from '../types';
 import type EsbuildServerlessPlugin from '../index';
 import { SERVERLESS_FOLDER } from '../constants';
 
@@ -212,8 +212,8 @@ describe('copyPreBuiltResources', () => {
   function getMockEsbuildPlugin(bundleIndividually = true): EsbuildServerlessPlugin {
     return {
       functions: {
-        hello1: { handler: 'hello1.handler', events: [], package: { artifact: 'hello1' }, skipEsbuild: true },
-        hello2: { handler: 'hello2.handler', events: [], package: { artifact: 'hello2' }, skipEsbuild: true },
+        hello1: { handler: 'hello1.handler', events: [], package: { artifact: 'hello1' }, skipSwc: true },
+        hello2: { handler: 'hello2.handler', events: [], package: { artifact: 'hello2' }, skipSwc: true },
       },
       serverless: {
         service: {
@@ -278,16 +278,16 @@ describe('copyPreBuiltResources', () => {
       handler: 'hello3.handler',
       events: [],
       package: { artifact: 'hello3' },
-      skipEsbuild: false,
-    } as EsbuildFunctionDefinitionHandler;
+      skipSwc: false,
+    } as SwcFunctionDefinitionHandler;
 
     await copyPreBuiltResources.call(mockEsbuildPlugin);
 
     expect(mockEsbuildPlugin.serverless.service.package.artifact).not.toBeDefined();
     expect(fs.copy).toHaveBeenCalledTimes(2);
     Object.keys(mockEsbuildPlugin.functions).forEach((functionAlias) => {
-      const func = mockEsbuildPlugin.functions[functionAlias] as EsbuildFunctionDefinitionHandler;
-      if (func.skipEsbuild) {
+      const func = mockEsbuildPlugin.functions[functionAlias] as SwcFunctionDefinitionHandler;
+      if (func.skipSwc) {
         expect(func?.package?.artifact).toEqual(`.esbuild/${SERVERLESS_FOLDER}/${functionAlias}.zip`);
       }
     });

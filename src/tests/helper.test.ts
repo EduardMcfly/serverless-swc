@@ -164,7 +164,7 @@ describe('extractFunctionEntries', () => {
       ]);
     });
 
-    it('should not return entries for handlers which have skipEsbuild set to true', async () => {
+    it('should not return entries for handlers which have skipSwc set to true', async () => {
       jest.mocked(fs.existsSync).mockReturnValue(true);
       const functionDefinitions = {
         function1: {
@@ -174,7 +174,7 @@ describe('extractFunctionEntries', () => {
         function2: {
           events: [],
           handler: 'file2.handler',
-          skipEsbuild: true,
+          skipSwc: true,
         },
       };
 
@@ -211,13 +211,13 @@ describe('extractFunctionEntries', () => {
       ]);
     });
 
-    it('should use esbuildEntrypoint in priority', () => {
+    it('should use swcEntrypoint in priority', () => {
       jest.mocked(fs.existsSync).mockReturnValue(true);
       const functionDefinitions = {
         function1: {
           events: [],
           handler: '/opt/extension/my_custom_handler',
-          esbuildEntrypoint: 'file1.handler',
+          swcEntrypoint: 'file1.handler',
         },
       };
 
@@ -472,25 +472,25 @@ describe('getDepsFromBundle', () => {
 });
 
 describe('isESM', () => {
-  it('should return true when format is set to esm', () => {
+  it('should return true when outputFileExtension is set to .mjs', () => {
     const config = {
-      format: 'esm',
+      outputFileExtension: '.mjs',
     } as Partial<Configuration> as Configuration;
 
     expect(isESM(config)).toBe(true);
   });
 
-  it('should return true when platform is set to neutral and format is not set', () => {
+  it('should return true when outputFileExtension is .mjs and format is not set', () => {
     const config = {
-      platform: 'neutral',
+      outputFileExtension: '.mjs',
     } as Partial<Configuration> as Configuration;
 
     expect(isESM(config)).toBe(true);
   });
 
-  it('should return false when platform is set to node and format is not set', () => {
+  it('should return false when outputFileExtension is .js', () => {
     const config = {
-      platform: 'node',
+      outputFileExtension: '.js',
     } as Partial<Configuration> as Configuration;
 
     expect(isESM(config)).toBe(false);

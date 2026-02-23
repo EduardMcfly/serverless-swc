@@ -28,7 +28,7 @@ import { BUILD_FOLDER, ONLY_PREFIX, SERVERLESS_FOLDER, WORK_FOLDER } from './con
 import type {
   ConfigFn,
   Configuration,
-  EsbuildFunctionDefinitionHandler,
+  SwcFunctionDefinitionHandler,
   FileBuildResult,
   FunctionBuildResult,
   ImprovedServerlessOptions,
@@ -55,7 +55,7 @@ function updateFile(op: string, src: string, dest: string) {
   }
 }
 
-class EsbuildServerlessPlugin implements ServerlessPlugin {
+class SwcServerlessPlugin implements ServerlessPlugin {
   serviceDirPath: string;
 
   outputWorkFolder: string | undefined;
@@ -80,7 +80,7 @@ class EsbuildServerlessPlugin implements ServerlessPlugin {
 
   buildResults: FunctionBuildResult[] | undefined;
 
-  /** Used for storing previous esbuild build results so we can rebuild more efficiently */
+  /** Used for storing previous swc build results so we can rebuild more efficiently */
   buildCache: Record<string, FileBuildResult> = {};
 
   // These are bound to imported functions.
@@ -111,11 +111,11 @@ class EsbuildServerlessPlugin implements ServerlessPlugin {
     this.preLocal = preLocal.bind(this);
     this.bundle = bundle.bind(this);
 
-    // This tells serverless that this skipEsbuild property can exist in a function definition, but isn't required.
+    // This tells serverless that this skipSwc property can exist in a function definition, but isn't required.
     // That way a user could skip a function if they have defined their own artifact, for example.
     this.serverless.configSchemaHandler.defineFunctionProperties(this.serverless.service.provider.name, {
       properties: {
-        skipEsbuild: { type: 'boolean' },
+        skipSwc: { type: 'boolean' },
       },
     });
 
@@ -233,11 +233,11 @@ class EsbuildServerlessPlugin implements ServerlessPlugin {
     const nodeFunctions: Record<string, Serverless.FunctionDefinitionHandler> = {};
 
     for (const [functionAlias, fn] of Object.entries(functions)) {
-      const currFn = fn as EsbuildFunctionDefinitionHandler;
+      const currFn = fn as SwcFunctionDefinitionHandler;
       if (this.isFunctionDefinitionHandler(currFn) && this.isNodeFunction(currFn)) {
         buildOptions.disposeContext = currFn.disposeContext ? currFn.disposeContext : buildOptions.disposeContext; // disposeContext configuration can be overridden per function
         if (buildOptions.skipBuild && !buildOptions.skipBuildExcludeFns?.includes(functionAlias)) {
-          currFn.skipEsbuild = true;
+          currFn.skipSwc = true;
         }
 
         nodeFunctions[functionAlias] = currFn;
@@ -306,8 +306,7 @@ class EsbuildServerlessPlugin implements ServerlessPlugin {
     const DEFAULT_BUILD_OPTIONS: Partial<Configuration> = {
       concurrency: Infinity,
       zipConcurrency: Infinity,
-      bundle: true,
-      target: 'node18',
+      target: 'node',
       external: [],
       exclude: ['aws-sdk'],
       nativeZip: false,
@@ -325,7 +324,6 @@ class EsbuildServerlessPlugin implements ServerlessPlugin {
         },
       },
       keepOutputDirectory: false,
-      platform: 'node',
       outputFileExtension: '.js',
       skipBuild: false,
       skipBuildExcludeFns: [],
@@ -337,21 +335,19 @@ class EsbuildServerlessPlugin implements ServerlessPlugin {
 
     assertIsSupportedRuntime(providerRuntime);
 
-    const runtimeMatcher = providerRuntimeMatcher[this.serverless.service.provider.name];
-    const target = isNodeMatcherKey(providerRuntime) ? runtimeMatcher?.[providerRuntime] : undefined;
-
-    const resolvedOptions = {
-      ...(target ? { target } : {}),
-    };
+    const resolvedOptions = {};
     const withDefaultOptions = mergeDeepRight(DEFAULT_BUILD_OPTIONS);
     const withResolvedOptions = mergeDeepRight(withDefaultOptions(resolvedOptions));
 
-    const configPath: string | undefined = this.serverless.service.custom?.esbuild?.config;
+    const configPath: string | undefined =
+      this.serverless.service.custom?.swc?.config || this.serverless.service.custom?.esbuild?.config;
 
     const config: ConfigFn | undefined = configPath ? require(path.join(this.serviceDirPath, configPath)) : undefined;
 
     return withResolvedOptions<Configuration>(
-      config ? config(this.serverless) : this.serverless.service.custom?.esbuild ?? {}
+      config
+        ? config(this.serverless)
+        : this.serverless.service.custom?.swc ?? this.serverless.service.custom?.esbuild ?? {}
     ) as Configuration;
   }
 
@@ -403,7 +399,7 @@ class EsbuildServerlessPlugin implements ServerlessPlugin {
           ...(this.serverless.service.package?.include || []),
           ...(this.serverless.service.package?.exclude || []).map(concat('!')),
           ...(this.serverless.service.package?.patterns || []),
-          '!node_modules/serverless-esbuild',
+          '!node_modules/serverless-swc',
         ]),
       ],
     };
@@ -553,4 +549,4 @@ class EsbuildServerlessPlugin implements ServerlessPlugin {
   }
 }
 
-export = EsbuildServerlessPlugin;
+export = SwcServerlessPlugin;

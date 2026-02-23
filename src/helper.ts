@@ -11,7 +11,7 @@ import { uniq } from 'ramda';
 import type Serverless from 'serverless';
 import type ServerlessPlugin from 'serverless/classes/Plugin';
 import type { Configuration, DependencyMap, FunctionEntry, IFile } from './types';
-import type { EsbuildFunctionDefinitionHandler } from './types';
+import type { SwcFunctionDefinitionHandler } from './types';
 import { DEFAULT_EXTENSIONS } from './constants';
 
 export function asArray<T>(data: T | T[]): T[] {
@@ -58,14 +58,14 @@ export function extractFunctionEntries(
 
   return Object.keys(functions)
     .filter((functionAlias) => {
-      return !(functions[functionAlias] as EsbuildFunctionDefinitionHandler).skipEsbuild;
+      return !(functions[functionAlias] as SwcFunctionDefinitionHandler).skipSwc;
     })
     .map((functionAlias) => {
-      const func = functions[functionAlias] as EsbuildFunctionDefinitionHandler;
+      const func = functions[functionAlias] as SwcFunctionDefinitionHandler;
       assert(func, `${functionAlias} not found in functions`);
 
-      const { handler, esbuildEntrypoint } = func;
-      const entrypoint = esbuildEntrypoint || handler;
+      const { handler, swcEntrypoint } = func;
+      const entrypoint = swcEntrypoint || handler;
 
       const fnName = path.extname(entrypoint);
       const fnNameLastAppearanceIndex = entrypoint.lastIndexOf(fnName);
@@ -165,8 +165,8 @@ const getBaseDep = (input: string): string | undefined => {
   }
 };
 
-export const isESM = (buildOptions: Configuration): boolean => {
-  return buildOptions.format === 'esm' || (buildOptions.platform === 'neutral' && !buildOptions.format);
+export const isESM = (buildOptions: Configuration | undefined): boolean => {
+  return buildOptions?.outputFileExtension === '.mjs';
 };
 
 /**

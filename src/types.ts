@@ -1,10 +1,10 @@
 import type { WatchOptions } from 'chokidar';
-import type { BuildOptions, BuildResult, Plugin } from 'esbuild';
+import type { BundleOptions } from '@swc/core/spack';
 import type Serverless from 'serverless';
 
 export type ConfigFn = (sls: Serverless) => Configuration;
 
-export type Plugins = Plugin[];
+export type Plugins = any[];
 export type ReturnPluginsFn = (sls: Serverless) => Plugins;
 export type ESMPluginsModule = { default: Plugins | ReturnPluginsFn };
 
@@ -28,9 +28,11 @@ interface NodeExternalsOptions {
   allowList?: string[];
 }
 
-export type EsbuildOptions = Omit<BuildOptions, 'watch' | 'plugins'>;
+export type SwcOptions = Omit<BundleOptions, 'watch' | 'plugins'>;
 
-export interface Configuration extends EsbuildOptions {
+export interface Configuration extends SwcOptions {
+  external?: string[];
+  resolveExtensions?: string[];
   concurrency?: number;
   zipConcurrency?: number;
   packager: PackagerId;
@@ -53,10 +55,10 @@ export interface Configuration extends EsbuildOptions {
   disposeContext?: boolean;
 }
 
-export interface EsbuildFunctionDefinitionHandler extends Serverless.FunctionDefinitionHandler {
+export interface SwcFunctionDefinitionHandler extends Serverless.FunctionDefinitionHandler {
   disposeContext?: boolean;
-  skipEsbuild: boolean;
-  esbuildEntrypoint?: string;
+  skipSwc: boolean;
+  swcEntrypoint?: string;
 }
 
 export interface FunctionEntry {
@@ -79,11 +81,11 @@ interface BuildInvalidate {
   dispose(): void;
 }
 
-interface BuildIncremental extends BuildResult {
+interface BuildIncremental {
   rebuild: BuildInvalidate;
 }
 
-interface OldAPIResult extends BuildResult {
+interface OldAPIResult {
   rebuild?: BuildInvalidate;
   stop?: () => void;
 }
@@ -114,8 +116,8 @@ interface ServeOnRequestArgs {
 }
 
 export interface BuildContext {
-  /** Documentation: https://esbuild.github.io/api/#rebuild */
-  rebuild(): Promise<BuildResult>;
+  /** Documentation: https://swc.rs/docs/usage/spack */
+  rebuild(): Promise<any>;
 
   /** Documentation: https://esbuild.github.io/api/#watch */
   watch(options?: {}): Promise<void>;
@@ -127,7 +129,7 @@ export interface BuildContext {
   dispose(): Promise<void>;
 }
 
-/** Documentation: https://esbuild.github.io/api/#serve-return-values */
+/** Documentation: https://swc.rs/docs/usage/spack */
 interface ServeResult {
   port: number;
   hosts: string[];

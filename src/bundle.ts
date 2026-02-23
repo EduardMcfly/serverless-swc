@@ -1,30 +1,28 @@
 import assert from 'assert';
 import { Predicate } from 'effect';
-import type { BuildOptions } from 'esbuild';
-import * as pkg from 'esbuild';
+import { bundle as swcBundle } from '@swc/core';
+import type { BundleOptions } from '@swc/core/spack';
 import fs from 'fs-extra';
 import pMap from 'p-map';
 import path from 'path';
 import { uniq } from 'ramda';
 
-import type EsbuildServerlessPlugin from './index';
+import type SwcServerlessPlugin from './index';
 import { asArray, assertIsString, isESM } from './helper';
-import type { EsbuildOptions, FileBuildResult, FunctionBuildResult, BuildContext } from './types';
-import { trimExtension } from './utils';
+import type { FileBuildResult, FunctionBuildResult } from './types';
 
 const getStringArray = (input: unknown): string[] => asArray(input).filter(Predicate.isString);
 
-export async function bundle(this: EsbuildServerlessPlugin): Promise<void> {
+export async function bundle(this: SwcServerlessPlugin): Promise<void> {
   assert(this.buildOptions, 'buildOptions is not defined');
 
   this.prepare();
 
-  this.log.verbose(`Compiling to ${this.buildOptions?.target} bundle with esbuild...`);
+  this.log.verbose(`Compiling to ${this.buildOptions?.target} bundle with swc...`);
 
   const exclude = getStringArray(this.buildOptions?.exclude);
 
-  // esbuild v0.7.0 introduced config options validation, so I have to delete plugin specific options from esbuild config.
-  const esbuildOptions: EsbuildOptions = [
+  const swcOptions: any = [
     'concurrency',
     'zipConcurrency',
     'exclude',
@@ -50,10 +48,9 @@ export async function bundle(this: EsbuildServerlessPlugin): Promise<void> {
     return rest;
   }, this.buildOptions);
 
-  const config: Omit<BuildOptions, 'watch'> = {
-    ...esbuildOptions,
-    external: [...getStringArray(this.buildOptions?.external), ...(exclude.includes('*') ? [] : exclude)],
-    plugins: this.plugins,
+  const config: Omit<BundleOptions, 'watch' | 'plugins' | 'entry' | 'output'> = {
+    ...swcOptions,
+    externalModules: [...getStringArray(this.buildOptions?.external), ...(exclude.includes('*') ? [] : exclude)],
   };
 
   const { buildOptions, buildDirPath } = this;
@@ -76,10 +73,6 @@ export async function bundle(this: EsbuildServerlessPlugin): Promise<void> {
     throw new this.serverless.classes.Error('ERROR: Non esm builds should not output a file with extension ".mjs".');
   }
 
-  if (buildOptions.outputFileExtension !== '.js') {
-    config.outExtension = { '.js': buildOptions.outputFileExtension };
-  }
-
   /** Build the files */
   const bundleMapper = async (entry: string): Promise<FileBuildResult> => {
     const bundlePath = entry.slice(0, entry.lastIndexOf('.')) + buildOptions.outputFileExtension;
@@ -99,34 +92,33 @@ export async function bundle(this: EsbuildServerlessPlugin): Promise<void> {
       }
     }
 
-    const options = {
+    const options: BundleOptions = {
       ...config,
-      entryPoints: [entry],
-      outdir: path.join(buildDirPath, path.dirname(entry)),
+      entry,
+      output: {
+        path: path.join(buildDirPath, path.dirname(entry)),
+        name: path.basename(bundlePath),
+      },
     };
 
-    type ContextFn = (opts: typeof options) => Promise<BuildContext>;
-    type WithContext = typeof pkg & { context?: ContextFn };
-    const context = buildOptions.skipRebuild ? undefined : await (pkg as WithContext).context?.(options);
-
     let result;
-    if (!buildOptions.skipRebuild) {
-      result = await context?.rebuild();
-      if (!result) {
-        result = await pkg.build(options);
+    try {
+      result = await swcBundle(options);
+
+      for (const [name, output] of Object.entries(result)) {
+        const outFilePath = path.join(options.output.path, name);
+        fs.writeFileSync(outFilePath, output.code);
+        if (output.map) {
+          fs.writeFileSync(`${outFilePath}.map`, output.map);
+        }
       }
-    } else {
-      result = await pkg.build(options);
+    } catch (err: any) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore Serverless typings (as of v3.0.2) are incorrect
+      throw new this.serverless.classes.Error(`SWC bundle failed: ${err.message}`);
     }
 
-    if (config.metafile) {
-      fs.writeFileSync(
-        path.join(buildDirPath, `${trimExtension(entry)}-meta.json`),
-        JSON.stringify(result.metafile, null, 2)
-      );
-    }
-
-    return { bundlePath, entry, result, context };
+    return { bundlePath, entry, result, context: null };
   };
 
   // Files can contain multiple handlers for multiple functions, we want to get only the unique ones

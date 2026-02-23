@@ -1,20 +1,22 @@
-import { build } from 'esbuild';
+import { bundle as swcBundle } from '@swc/core';
 import pMap from 'p-map';
 import type { PartialDeep } from 'type-fest';
 
 import { bundle } from '../bundle';
 
 import type { Configuration, FunctionBuildResult, FunctionEntry } from '../types';
-import type EsbuildServerlessPlugin from '../index';
+import type SwcServerlessPlugin from '../index';
 
-jest.mock('esbuild');
+jest.mock('@swc/core', () => ({
+  bundle: jest.fn().mockResolvedValue({}),
+}));
 jest.mock('p-map');
 
 const getBuild = async () => {
-  return build;
+  return swcBundle;
 };
 
-const esbuildPlugin = (override?: Partial<EsbuildServerlessPlugin>): EsbuildServerlessPlugin =>
+const swcPlugin = (override?: Partial<SwcServerlessPlugin>): SwcServerlessPlugin =>
   ({
     prepare: jest.fn(),
     serverless: {
@@ -27,8 +29,8 @@ const esbuildPlugin = (override?: Partial<EsbuildServerlessPlugin>): EsbuildServ
     },
     buildOptions: {
       concurrency: Infinity,
-      bundle: true,
-      target: 'node12',
+
+      target: 'node',
       external: [],
       exclude: ['aws-sdk'],
       nativeZip: false,
@@ -37,7 +39,7 @@ const esbuildPlugin = (override?: Partial<EsbuildServerlessPlugin>): EsbuildServ
       watch: {},
       keepOutputDirectory: false,
       packagerOptions: {},
-      platform: 'node',
+
       outputFileExtension: '.js',
     },
     plugins: [],
@@ -53,9 +55,10 @@ const esbuildPlugin = (override?: Partial<EsbuildServerlessPlugin>): EsbuildServ
       success: jest.fn(),
     },
     ...override,
-  } as PartialDeep<EsbuildServerlessPlugin> as EsbuildServerlessPlugin);
+  } as PartialDeep<SwcServerlessPlugin> as SwcServerlessPlugin);
 
 beforeEach(() => {
+  jest.mocked(swcBundle).mockResolvedValue({});
   jest.mocked(pMap).mockImplementation((entries, mapper) => {
     return Promise.all((entries as string[]).map((entry, index) => mapper(entry, index)));
   });
@@ -85,7 +88,7 @@ it('should call esbuild only once when functions share the same entry', async ()
     },
   ];
 
-  await bundle.call(esbuildPlugin({ functionEntries }));
+  await bundle.call(swcPlugin({ functionEntries }));
 
   const proxy = await getBuild();
   expect(proxy).toHaveBeenCalledTimes(1);
@@ -111,7 +114,7 @@ it('should only call esbuild multiple times when functions have different entrie
     },
   ];
 
-  await bundle.call(esbuildPlugin({ functionEntries }));
+  await bundle.call(swcPlugin({ functionEntries }));
 
   const proxy = await getBuild();
   expect(proxy).toHaveBeenCalledTimes(2);
@@ -150,7 +153,7 @@ it('should set buildResults after compilation is complete', async () => {
     },
   ];
 
-  const plugin = esbuildPlugin({ functionEntries });
+  const plugin = swcPlugin({ functionEntries });
 
   await bundle.call(plugin);
 
@@ -169,7 +172,7 @@ it('should set the concurrency for pMap with the concurrency specified', async (
     },
   ];
 
-  const plugin = esbuildPlugin({ functionEntries });
+  const plugin = swcPlugin({ functionEntries });
 
   await bundle.call(plugin);
 
@@ -190,18 +193,19 @@ it('should filter out non esbuild options', async () => {
     },
   ];
 
-  const plugin = esbuildPlugin({ functionEntries });
+  const plugin = swcPlugin({ functionEntries });
 
   await bundle.call(plugin);
 
   const config: any = {
-    bundle: true,
-    entryPoints: ['file1.ts'],
-    external: ['aws-sdk'],
-    outdir: '/workdir/.esbuild',
-    platform: 'node',
-    plugins: [],
-    target: 'node12',
+    entry: 'file1.ts',
+    target: 'node',
+    external: [],
+    externalModules: ['aws-sdk'],
+    output: {
+      name: 'file1.js',
+      path: '/workdir/.esbuild',
+    },
   };
 
   const proxy = await getBuild();
@@ -243,7 +247,7 @@ describe('buildOption platform node', () => {
       },
     ];
 
-    const plugin = esbuildPlugin({ functionEntries });
+    const plugin = swcPlugin({ functionEntries });
 
     await bundle.call(plugin);
 
@@ -272,8 +276,8 @@ describe('buildOption platform node', () => {
 
     const buildOptions: Partial<Configuration> = {
       concurrency: Infinity,
-      bundle: true,
-      target: 'node12',
+
+      target: 'node',
       external: [],
       exclude: ['aws-sdk'],
       nativeZip: false,
@@ -282,7 +286,7 @@ describe('buildOption platform node', () => {
       watch: {},
       keepOutputDirectory: false,
       packagerOptions: {},
-      platform: 'node',
+
       outputFileExtension: '.cjs',
     };
 
@@ -299,7 +303,7 @@ describe('buildOption platform node', () => {
       },
     ];
 
-    const plugin = esbuildPlugin({ functionEntries, buildOptions: buildOptions as any });
+    const plugin = swcPlugin({ functionEntries, buildOptions: buildOptions as any });
 
     await bundle.call(plugin);
 
@@ -328,8 +332,8 @@ describe('buildOption platform node', () => {
 
     const buildOptions: Partial<Configuration> = {
       concurrency: Infinity,
-      bundle: true,
-      target: 'node12',
+
+      target: 'node',
       external: [],
       exclude: ['aws-sdk'],
       nativeZip: false,
@@ -338,11 +342,11 @@ describe('buildOption platform node', () => {
       watch: {},
       keepOutputDirectory: false,
       packagerOptions: {},
-      platform: 'node',
+
       outputFileExtension: '.mjs',
     };
 
-    const plugin = esbuildPlugin({ functionEntries, buildOptions: buildOptions as any });
+    const plugin = swcPlugin({ functionEntries, buildOptions: buildOptions as any });
 
     const expectedError = 'ERROR: Non esm builds should not output a file with extension ".mjs".';
 
@@ -377,8 +381,8 @@ describe('buildOption platform neutral', () => {
 
     const buildOptions: Partial<Configuration> = {
       concurrency: Infinity,
-      bundle: true,
-      target: 'node12',
+
+      target: 'node',
       external: [],
       exclude: ['aws-sdk'],
       nativeZip: false,
@@ -387,7 +391,7 @@ describe('buildOption platform neutral', () => {
       watch: {},
       keepOutputDirectory: false,
       packagerOptions: {},
-      platform: 'neutral',
+
       outputFileExtension: '.js',
     };
 
@@ -404,7 +408,7 @@ describe('buildOption platform neutral', () => {
       },
     ];
 
-    const plugin = esbuildPlugin({ functionEntries, buildOptions: buildOptions as any });
+    const plugin = swcPlugin({ functionEntries, buildOptions: buildOptions as any });
 
     await bundle.call(plugin);
 
@@ -433,8 +437,8 @@ describe('buildOption platform neutral', () => {
 
     const buildOptions: Partial<Configuration> = {
       concurrency: Infinity,
-      bundle: true,
-      target: 'node12',
+
+      target: 'node',
       external: [],
       exclude: ['aws-sdk'],
       nativeZip: false,
@@ -443,7 +447,7 @@ describe('buildOption platform neutral', () => {
       watch: {},
       keepOutputDirectory: false,
       packagerOptions: {},
-      platform: 'neutral',
+
       outputFileExtension: '.mjs',
     };
 
@@ -460,7 +464,7 @@ describe('buildOption platform neutral', () => {
       },
     ];
 
-    const plugin = esbuildPlugin({ functionEntries, buildOptions: buildOptions as any });
+    const plugin = swcPlugin({ functionEntries, buildOptions: buildOptions as any });
 
     await bundle.call(plugin);
 
@@ -489,8 +493,8 @@ describe('buildOption platform neutral', () => {
 
     const buildOptions: Partial<Configuration> = {
       concurrency: Infinity,
-      bundle: true,
-      target: 'node12',
+
+      target: 'node',
       external: [],
       exclude: ['aws-sdk'],
       nativeZip: false,
@@ -499,11 +503,11 @@ describe('buildOption platform neutral', () => {
       watch: {},
       keepOutputDirectory: false,
       packagerOptions: {},
-      platform: 'neutral',
+
       outputFileExtension: '.cjs',
     };
 
-    const plugin = esbuildPlugin({ functionEntries, buildOptions: buildOptions as any });
+    const plugin = swcPlugin({ functionEntries, buildOptions: buildOptions as any });
 
     const expectedError = 'ERROR: format "esm" or platform "neutral" should not output a file with extension ".cjs".';
 

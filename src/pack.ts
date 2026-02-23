@@ -14,7 +14,7 @@ import { getPackager } from './packagers';
 import { humanSize, trimExtension, zip } from './utils';
 
 import type EsbuildServerlessPlugin from './index';
-import type { EsbuildFunctionDefinitionHandler, FunctionBuildResult, FunctionReference, IFiles } from './types';
+import type { SwcFunctionDefinitionHandler, FunctionBuildResult, FunctionReference, IFiles } from './types';
 
 function setFunctionArtifactPath(
   this: EsbuildServerlessPlugin,
@@ -270,7 +270,7 @@ export async function copyPreBuiltResources(this: EsbuildServerlessPlugin) {
   const zipMapper = async (buildResult: FunctionReference) => {
     const { func, functionAlias } = buildResult;
 
-    if ((func as EsbuildFunctionDefinitionHandler).skipEsbuild) {
+    if ((func as SwcFunctionDefinitionHandler).skipSwc) {
       const zipName = `${functionAlias}.zip`;
       const artifactPath = path.join(workDirPath, SERVERLESS_FOLDER, zipName);
 

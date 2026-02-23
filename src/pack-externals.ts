@@ -2,15 +2,10 @@ import assert from 'assert';
 import path from 'path';
 import fse from 'fs-extra';
 import * as R from 'ramda';
-import type {
-  createAllowPredicate as CreateAllowPredicateFn,
-  findDependencies as FindDependenciesFn,
-  findPackagePaths as FindPackagePathsFn,
-} from 'esbuild-node-externals/dist/utils';
 
 import { getPackager } from './packagers';
 import { findProjectRoot, findUp } from './utils';
-import type EsbuildServerlessPlugin from './index';
+import type SwcServerlessPlugin from './index';
 import type { JSONObject, PackageJSON } from './types';
 import { assertIsString } from './helper';
 
@@ -62,7 +57,7 @@ function addModulesToPackageJson(externalModules: string[], packageJson: JSONObj
  * @this - The active plugin instance
  */
 function getProdModules(
-  this: EsbuildServerlessPlugin,
+  this: SwcServerlessPlugin,
   externalModules: { external: string }[],
   packageJsonPath: string,
   rootPackageJsonPath: string
@@ -187,15 +182,7 @@ function getProdModules(
 }
 
 export function nodeExternalsPluginUtilsPath(): string | undefined {
-  try {
-    const resolvedPackage = require.resolve('esbuild-node-externals/dist/utils', {
-      paths: [process.cwd()],
-    });
-
-    return resolvedPackage;
-  } catch {
-    // No-op
-  }
+  return undefined;
 }
 
 /**
@@ -212,38 +199,10 @@ export function nodeExternalsPluginUtilsPath(): string | undefined {
  * and performance.
  */
 // eslint-disable-next-line max-statements
-export async function packExternalModules(this: EsbuildServerlessPlugin) {
+export async function packExternalModules(this: SwcServerlessPlugin) {
   assert(this.buildOptions, 'buildOptions not defined');
 
   const upperPackageJson = findUp('package.json');
-
-  const { plugins } = this;
-
-  if (plugins && plugins.map((plugin) => plugin.name).includes('node-externals')) {
-    const utilsPath = nodeExternalsPluginUtilsPath();
-
-    if (utilsPath) {
-      const {
-        findDependencies,
-        findPackagePaths,
-        createAllowPredicate,
-      }: {
-        findDependencies: typeof FindDependenciesFn;
-        findPackagePaths: typeof FindPackagePathsFn;
-        createAllowPredicate: typeof CreateAllowPredicateFn;
-      } = require(utilsPath);
-
-      this.buildOptions.external = findDependencies({
-        packagePaths: findPackagePaths(),
-        dependencies: true,
-        devDependencies: false,
-        peerDependencies: false,
-        optionalDependencies: false,
-        allowWorkspaces: false,
-        allowPredicate: createAllowPredicate(this.buildOptions.nodeExternals?.allowList ?? []),
-      });
-    }
-  }
 
   const externals: string[] =
     Array.isArray(this.buildOptions.external) &&
