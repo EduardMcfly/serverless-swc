@@ -9,7 +9,7 @@ import { uniq } from 'ramda';
 
 import type SwcServerlessPlugin from './index';
 import { asArray, assertIsString, isESM } from './helper';
-import type { FileBuildResult, FunctionBuildResult } from './types';
+import type { Configuration, FileBuildResult, FunctionBuildResult } from './types';
 
 const getStringArray = (input: unknown): string[] => asArray(input).filter(Predicate.isString);
 
@@ -22,7 +22,7 @@ export async function bundle(this: SwcServerlessPlugin): Promise<void> {
 
   const exclude = getStringArray(this.buildOptions?.exclude);
 
-  const swcOptions: any = [
+  const optionsList: (keyof Configuration)[] = [
     'concurrency',
     'zipConcurrency',
     'exclude',
@@ -40,11 +40,13 @@ export async function bundle(this: SwcServerlessPlugin): Promise<void> {
     'skipBuild',
     'skipBuildExcludeFns',
     'stripEntryResolveExtensions',
-  ].reduce<Record<string, any>>((options, optionName) => {
+  ];
+
+  const swcOptions = optionsList.reduce<Record<string, any>>((options, optionName) => {
     const { [optionName]: _, ...rest } = options;
 
     return rest;
-  }, this.buildOptions);
+  }, this.buildOptions) as BundleOptions;
 
   const config: Omit<BundleOptions, 'watch' | 'plugins' | 'entry' | 'output'> = {
     ...swcOptions,
@@ -75,49 +77,54 @@ export async function bundle(this: SwcServerlessPlugin): Promise<void> {
   const bundleMapper = async (entry: string): Promise<FileBuildResult> => {
     const bundlePath = entry.slice(0, entry.lastIndexOf('.')) + buildOptions.outputFileExtension;
 
-    // check cache
-    if (this.buildCache) {
-      const { result } = this.buildCache[entry] ?? {};
-      if (result) {
-        return { bundlePath, entry, result };
-      }
-    }
+    // TODO
+    // if (this.buildCache) {
+    //   const { result } = this.buildCache[entry] ?? {};
+    //   if (result) {
+    //     return { bundlePath, entry, result };
+    //   }
+    // }
 
+    const outFile = path.basename(bundlePath);
     const options: BundleOptions = {
       ...config,
       entry,
       output: {
         path: path.join(buildDirPath, path.dirname(entry)),
-        name: path.basename(bundlePath),
+        name: outFile,
       },
     };
 
-    let result;
     try {
-      result = await swcBundle(options);
+      const result = await swcBundle(options).then((out) => out[path.basename(entry)]);
 
-      for (const { code, map } of Object.values(result)) {
-        const { path: outPath, name } = options.output;
-        const outFilePath = path.join(outPath, name);
-        fs.mkdirSync(path.dirname(outFilePath), { recursive: true });
+      if (!result) throw new Error(`Failed to bundle ${entry}`);
 
-        let finalCode = code;
-        if (map) {
-          fs.writeFileSync(`${outFilePath}.map`, map);
-          finalCode += `\n//# sourceMappingURL=${name}.map`;
-        }
+      const { code, map } = result;
+      const { path: outPath, name } = options.output;
+      fs.mkdirSync(outPath, { recursive: true });
 
-        if (finalCode) {
-          fs.writeFileSync(outFilePath, finalCode);
-        }
+      const sourceMaps = options.options?.sourceMaps ?? true;
+
+      const outFilePath = path.join(outPath, outFile);
+      let finalCode = code;
+
+      if (map && sourceMaps === 'inline') {
+        const base64Map = Buffer.from(map).toString('base64');
+        finalCode += `\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,${base64Map}`;
+      } else if (map && sourceMaps) {
+        fs.writeFileSync(`${outFilePath}.map`, map);
+        finalCode += `\n//# sourceMappingURL=${name}.map`;
       }
+
+      if (finalCode) fs.writeFileSync(outFilePath, finalCode);
+
+      return { bundlePath, entry, result };
     } catch (err: any) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore Serverless typings (as of v3.0.2) are incorrect
       throw new this.serverless.classes.Error(`SWC bundle failed: ${err.message}`);
     }
-
-    return { bundlePath, entry, result };
   };
 
   // Files can contain multiple handlers for multiple functions, we want to get only the unique ones

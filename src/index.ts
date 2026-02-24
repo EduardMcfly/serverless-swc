@@ -426,11 +426,12 @@ class SwcServerlessPlugin implements ServerlessPlugin {
     const patterns = asArray(service.package.patterns).filter(Predicate.isString);
 
     if (
-      patterns.length > 0 &&
-      anymatch(
-        patterns.filter((pattern) => !pattern.startsWith('!')),
-        filename
-      )
+      !0 ||
+      (patterns.length > 0 &&
+        anymatch(
+          patterns.filter((pattern) => !pattern.startsWith('!')),
+          filename
+        ))
     ) {
       const destFileName = path.resolve(path.join(this.buildDirPath, filename));
 

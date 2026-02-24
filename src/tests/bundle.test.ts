@@ -1,4 +1,5 @@
 import { bundle as swcBundle } from '@swc/core';
+import type { BundleOptions } from '@swc/core/spack';
 import pMap from 'p-map';
 import type { PartialDeep } from 'type-fest';
 
@@ -11,6 +12,10 @@ jest.mock('@swc/core', () => ({
   bundle: jest.fn().mockResolvedValue({}),
 }));
 jest.mock('p-map');
+jest.mock('fs-extra', () => ({
+  mkdirSync: jest.fn(),
+  writeFileSync: jest.fn(),
+}));
 
 const getBuild = async () => {
   return swcBundle;
@@ -58,7 +63,19 @@ const swcPlugin = (override?: Partial<SwcServerlessPlugin>): SwcServerlessPlugin
   } as PartialDeep<SwcServerlessPlugin> as SwcServerlessPlugin);
 
 beforeEach(() => {
-  jest.mocked(swcBundle).mockResolvedValue({});
+  jest.mocked(swcBundle).mockImplementation(async (optionsArg: any) => {
+    // Generate a response that will match output[file] logic
+    const options = optionsArg as BundleOptions;
+    if (options && options.output && options.output.name) {
+      return {
+        [options.output.name]: {
+          code: 'mock-code',
+          map: 'mock-map',
+        },
+      };
+    }
+    return {};
+  });
   jest.mocked(pMap).mockImplementation((entries, mapper) => {
     return Promise.all((entries as string[]).map((entry, index) => mapper(entry, index)));
   });
@@ -203,7 +220,7 @@ it('should filter out non swc options', async () => {
     external: [],
     externalModules: ['aws-sdk'],
     output: {
-      name: 'file1.js',
+      name: 'file1.ts',
       path: '/workdir/.swc',
     },
   };

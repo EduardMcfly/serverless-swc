@@ -1,3 +1,4 @@
+import type { Output } from '@swc/core';
 import type { WatchOptions } from 'chokidar';
 import type { BundleOptions } from '@swc/core/spack';
 import type Serverless from 'serverless';
@@ -73,24 +74,10 @@ export interface FunctionReference {
   functionAlias: string;
 }
 
-interface BuildInvalidate {
-  (): Promise<BuildIncremental>;
-  dispose(): void;
-}
-
-interface BuildIncremental {
-  rebuild: BuildInvalidate;
-}
-
-interface OldAPIResult {
-  rebuild?: BuildInvalidate;
-  stop?: () => void;
-}
-
 export interface FileBuildResult {
   bundlePath: string;
   entry: string;
-  result: OldAPIResult;
+  result: Output;
 }
 
 export type JSONObject = any;
