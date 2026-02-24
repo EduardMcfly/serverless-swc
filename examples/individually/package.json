@@ -12,6 +12,6 @@
     "@swc/core": "^1.15.13",
     "serverless": "^3.22.0",
     "serverless-swc": "file:../..",
-    "serverless-offline": "^10.2.1"
+    "serverless-offline": "^13.9.0"
   }
 }
