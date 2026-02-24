@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { bundle as swcBundle } from '@swc/core';
 import type { BundleOptions } from '@swc/core/spack';
 import pMap from 'p-map';
@@ -66,9 +67,10 @@ beforeEach(() => {
   jest.mocked(swcBundle).mockImplementation(async (optionsArg: any) => {
     // Generate a response that will match output[file] logic
     const options = optionsArg as BundleOptions;
-    if (options && options.output && options.output.name) {
+    if (typeof options.entry === 'string') {
+      const entryName = path.basename(options.entry);
       return {
-        [options.output.name]: {
+        [entryName]: {
           code: 'mock-code',
           map: 'mock-map',
         },
@@ -220,7 +222,7 @@ it('should filter out non swc options', async () => {
     external: [],
     externalModules: ['aws-sdk'],
     output: {
-      name: 'file1.ts',
+      name: 'file1.js',
       path: '/workdir/.swc',
     },
   };
